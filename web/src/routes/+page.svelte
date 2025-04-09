@@ -14,25 +14,55 @@
     }
   };
 
-  // helper function to help generate the chess pieces
-  const getPiece = (row: number, col: number): string | null => {
-    if (row === 1) {
-      return getIcon(true, pieceType.Pawn);
-    } else if (row === 6) {
-      return getIcon(false, pieceType.Pawn);
-    } else if (row === 0 || row === 7) {
-      if (col === 0 || col === 7) {
-        return getIcon(row === 0, pieceType.Rook);
-      } else if (col === 1 || col === 6) {
-        return getIcon(row === 0, pieceType.Knight);
-      } else if (col === 2 || col === 5) {
-        return getIcon(row === 0, pieceType.Bishop);
-      } else if (col === 3) {
-        return getIcon(row === 0, pieceType.Queen);
-      } else if (col === 4) {
-        return getIcon(row === 0, pieceType.King);
+  // helper function to help generate the chess pieces.
+  // by default white first, then black follow.
+  // override should change the order reverse, black first.
+  const getPiece = (
+    row: number,
+    col: number,
+    whiteFirst: boolean = true,
+  ): string | null => {
+    if (row == 1) {
+      return getIcon(whiteFirst, pieceType.Pawn);
+    }
+    if (row == 6) {
+      return getIcon(!whiteFirst, pieceType.Pawn);
+    }
+    if (row == 0) {
+      if (col == 7 || col == 0) {
+        return getIcon(whiteFirst, pieceType.Rook);
+      }
+      if (col == 6 || col == 1) {
+        return getIcon(whiteFirst, pieceType.Knight);
+      }
+      if (col == 5 || col == 2) {
+        return getIcon(whiteFirst, pieceType.Bishop);
+      }
+      if (col == 4) {
+        return getIcon(whiteFirst, pieceType.King);
+      }
+      if (col == 3) {
+        return getIcon(whiteFirst, pieceType.Queen);
       }
     }
+    if (row == 7) {
+      if (col == 7 || col == 0) {
+        return getIcon(!whiteFirst, pieceType.Rook);
+      }
+      if (col == 6 || col == 1) {
+        return getIcon(!whiteFirst, pieceType.Knight);
+      }
+      if (col == 5 || col == 2) {
+        return getIcon(!whiteFirst, pieceType.Bishop);
+      }
+      if (col == 3) {
+        return getIcon(!whiteFirst, pieceType.King);
+      }
+      if (col == 4) {
+        return getIcon(!whiteFirst, pieceType.Queen);
+      }
+    }
+
     return null;
   };
 

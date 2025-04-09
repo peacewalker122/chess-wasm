@@ -8,7 +8,7 @@ export interface Board {
 
 export enum pieceType {
 	Pawn = "P",
-	Knight = "K",
+	Knight = "N",
 	Bishop = "B",
 	Rook = "R",
 	Queen = "Q",
