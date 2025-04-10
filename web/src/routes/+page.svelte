@@ -1,10 +1,38 @@
 <script lang="ts">
-  import {pieceType, type Board} from "$lib/type";
+  import { pieceType, type Board } from "$lib/type";
+  import { createBoard, initWasm } from "$lib/wasm";
+  import { onMount } from "svelte";
   import "../styles/reset.css";
   // Create an array representing the chess board squares
   const boardSquares: Board[] = $state([]);
   const rows = 8;
   const cols = 8;
+
+  // Initialize game state
+  let wasmInitialized = false;
+  let wasmError: string | null = null;
+
+  // Selected piece for movement
+  let selectedPiece: Piece | null = null;
+  let possibleMoves: string[] = [];
+  let isMoving = false;
+
+  onMount(async () => {
+    try {
+      // Initialize WebAssembly
+      await initWasm();
+      wasmInitialized = true;
+
+      // Create the chess board
+      createBoard(true); // White goes first by default
+    } catch (error) {
+      console.error("Failed to initialize WASM:", error);
+      wasmError = "Failed to load chess engine. Using fallback implementation.";
+
+      // Use fallback implementation
+      createBoard(true);
+    }
+  });
 
   const getIcon = (isLight: boolean, piece: pieceType) => {
     if (isLight) {
@@ -84,12 +112,15 @@
 <div class="container">
   <div class="chess-board">
     {#each boardSquares as square (square.position)}
-    <div class="square {square.isLight ? 'light' : 'dark'}" data-position={square.position}>
-      {#if square.piece !== null}
-      <!-- the isLight parameter should be passed from user input when they choose white / black -->
-      <img src={square.piece} alt="Pawn" />
-      {/if}
-    </div>
+      <div
+        class="square {square.isLight ? 'light' : 'dark'}"
+        data-position={square.position}
+      >
+        {#if square.piece !== null}
+          <!-- the isLight parameter should be passed from user input when they choose white / black -->
+          <img src={square.piece} alt="Pawn" />
+        {/if}
+      </div>
     {/each}
   </div>
 </div>
