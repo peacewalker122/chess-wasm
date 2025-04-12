@@ -1,5 +1,4 @@
-import { json } from "@sveltejs/kit";
-import { type Board } from "$lib/type";
+import type { Board } from "$lib/type";
 
 // src/wasm.ts
 let isReady = false;
@@ -46,6 +45,22 @@ export function createBoard(isWhiteFirst = true): Board[] | null {
 		console.error("Error creating board:", error);
 		// Fallback to client-side initialization if WASM fails
 		// return initializeChessGame();
+		throw error;
+	}
+}
+
+export function startMove(from: string, to: string): Board[] | null {
+	if (!isReady) {
+		console.error("WebAssembly module is not initialized yet.");
+		return null;
+	}
+
+	try {
+		const result = (window as any).startMove(from, to);
+		const board: Board[] = JSON.parse(result);
+		return board;
+	} catch (error) {
+		console.error("Error starting move:", error);
 		throw error;
 	}
 }

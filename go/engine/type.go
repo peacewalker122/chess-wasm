@@ -30,9 +30,10 @@ type Move struct {
 }
 
 type Board struct {
-	Row      int     `json:"row"`
-	Col      int     `json:"col"`
-	IsLight  bool    `json:"isLight"`
-	Position string  `json:"position"`
-	Piece    *string `json:"piece"`
+	Row       int       `json:"row"`
+	Col       int       `json:"col"`
+	IsLight   bool      `json:"isLight"`
+	Position  string    `json:"position"`
+	Piece     *string   `json:"piece"`
+	PieceType PieceType `json:"-"`
 }

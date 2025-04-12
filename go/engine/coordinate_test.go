@@ -26,6 +26,23 @@ func TestGetIndexFromCoordinate(t *testing.T) {
 			want:       3,
 			want2:      0,
 		},
+		struct {
+			name       string
+			coordinate string
+			want       int
+			want2      int
+		}{
+			name:       "Success",
+			coordinate: "d2",
+			want:       1,
+			want2:      3,
+		},
+		{
+			name:       "Success",
+			coordinate: "a2",
+			want:       1,
+			want2:      0,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

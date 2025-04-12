@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { pieceType, type Board } from "$lib/type";
-  import { createBoard, initWasm } from "$lib/wasm";
-  import { onMount } from "svelte";
+  import {pieceType, type Board} from "$lib/type";
+  import {createBoard, initWasm, startMove} from "$lib/wasm";
+  import {onMount} from "svelte";
   import "../styles/reset.css";
   // Create an array representing the chess board squares
   let boardSquares: Board[] = $state([]);
@@ -15,7 +15,7 @@
   // Selected piece for movement
   let possibleMoves: string[] = [];
   let isMoving = false;
-  let selectedPosition: string | null = null;
+  let selectedPosition: string | null = $state(null);
 
   onMount(async () => {
     try {
@@ -25,7 +25,11 @@
       wasmInitialized = true;
       console.log("wasm initialized");
 
-      boardSquares = createBoard(true);
+      const board = createBoard(true);
+      if (board) {
+        boardSquares = board;
+      }
+
       console.log("board: ", boardSquares);
       console.log("WASM initialized successfully");
     } catch (error) {
@@ -33,14 +37,6 @@
       wasmError = "Failed to load chess engine. Using fallback implementation.";
     }
   });
-
-  const getIcon = (isLight: boolean, piece: pieceType) => {
-    if (isLight) {
-      return `w${piece}.svg`;
-    } else {
-      return `b${piece}.svg`;
-    }
-  };
 
   const handleSquareClick = (position: string) => {
     console.log("Square clicked:", position);
@@ -67,11 +63,12 @@
         const movingPiece = selectedSquare.piece;
 
         // Update board state (this will automatically update the UI)
-        boardSquares[selectedSquareIndex] = { ...selectedSquare, piece: null };
-        boardSquares[clickedSquareIndex] = {
-          ...clickedSquare,
-          piece: movingPiece,
-        };
+        console.log("selectedPosition: ", selectedPosition);
+        console.log("selectedSquare: ", position);
+        const board = startMove(selectedPosition, position);
+        if (board) {
+          boardSquares = board;
+        }
 
         // Reset movement state
         isMoving = false;
@@ -88,20 +85,16 @@
 <div class="container">
   <div class="chess-board">
     {#each boardSquares as square (square.position)}
-      <div
-        id={square.position}
-        class="square {square.isLight ? 'light' : 'dark'} {selectedPosition ===
+    <div id={square.position} class="square {square.isLight ? 'light' : 'dark'} {selectedPosition ===
         square.position
           ? 'selected'
-          : ''}"
-        data-position={square.position}
-        onclick={() => handleSquareClick(square.position)}
+          : ''}" data-position={square.position} onclick={()=> handleSquareClick(square.position)}
       >
-        {#if square.piece !== null}
-          <!-- the isLight parameter should be passed from user input when they choose white / black -->
-          <img src={square.piece} alt="Chess piece" />
-        {/if}
-      </div>
+      {#if square.piece !== null}
+      <!-- the isLight parameter should be passed from user input when they choose white / black -->
+      <img src={square.piece} alt="Chess piece" />
+      {/if}
+    </div>
     {/each}
   </div>
 </div>

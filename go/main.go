@@ -10,6 +10,7 @@ import (
 	"syscall/js"
 
 	"github.com/peacewalker122/chess-wasm/go/engine"
+	"github.com/rs/zerolog"
 )
 
 func main() {
@@ -17,6 +18,7 @@ func main() {
 
 	// Create channel to keep main function running
 	ch := make(chan struct{}, 1)
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 
 	game := &engine.Game{}
 
@@ -26,8 +28,6 @@ func main() {
 		return message
 	}))
 	js.Global().Set("buildBoard", js.FuncOf(func(this js.Value, args []js.Value) any {
-		fmt.Printf("Argument is: %+v\n", this)
-
 		_true := true
 		val := engine.CreateBoard(&_true)
 		game.Board = val
@@ -56,9 +56,10 @@ func main() {
 	js.Global().Set("startMove", js.FuncOf(func(this js.Value, args []js.Value) any {
 		fmt.Printf("Argument is: %+v\n", this)
 
-		if len(args) <= 2 {
+		if len(args) < 2 {
 			return js.ValueOf(errors.New("minimum args aren't achieved"))
 		}
+
 		arg1 := args[0]
 		arg2 := args[1]
 
