@@ -4,7 +4,7 @@
   import { onMount } from "svelte";
   import "../styles/reset.css";
   // Create an array representing the chess board squares
-  const boardSquares: Board[] = $state([]);
+  let boardSquares: Board[] = $state([]);
   const rows = 8;
   const cols = 8;
 
@@ -13,24 +13,24 @@
   let wasmError: string | null = null;
 
   // Selected piece for movement
-  let selectedPiece: Piece | null = null;
   let possibleMoves: string[] = [];
   let isMoving = false;
+  let selectedPosition: string | null = null;
 
   onMount(async () => {
     try {
+      console.log("initializing wasm");
       // Initialize WebAssembly
       await initWasm();
       wasmInitialized = true;
+      console.log("wasm initialized");
 
-      // Create the chess board
-      createBoard(true); // White goes first by default
+      boardSquares = createBoard(true);
+      console.log("board: ", boardSquares);
+      console.log("WASM initialized successfully");
     } catch (error) {
       console.error("Failed to initialize WASM:", error);
       wasmError = "Failed to load chess engine. Using fallback implementation.";
-
-      // Use fallback implementation
-      createBoard(true);
     }
   });
 
@@ -42,83 +42,64 @@
     }
   };
 
-  // helper function to help generate the chess pieces.
-  // by default white first, then black follow.
-  // override should change the order reverse, black first.
-  const getPiece = (
-    row: number,
-    col: number,
-    whiteFirst: boolean = true,
-  ): string | null => {
-    if (row == 1) {
-      return getIcon(whiteFirst, pieceType.Pawn);
-    }
-    if (row == 6) {
-      return getIcon(!whiteFirst, pieceType.Pawn);
-    }
-    if (row == 0) {
-      if (col == 7 || col == 0) {
-        return getIcon(whiteFirst, pieceType.Rook);
-      }
-      if (col == 6 || col == 1) {
-        return getIcon(whiteFirst, pieceType.Knight);
-      }
-      if (col == 5 || col == 2) {
-        return getIcon(whiteFirst, pieceType.Bishop);
-      }
-      if (col == 4) {
-        return getIcon(whiteFirst, pieceType.King);
-      }
-      if (col == 3) {
-        return getIcon(whiteFirst, pieceType.Queen);
-      }
-    }
-    if (row == 7) {
-      if (col == 7 || col == 0) {
-        return getIcon(!whiteFirst, pieceType.Rook);
-      }
-      if (col == 6 || col == 1) {
-        return getIcon(!whiteFirst, pieceType.Knight);
-      }
-      if (col == 5 || col == 2) {
-        return getIcon(!whiteFirst, pieceType.Bishop);
-      }
-      if (col == 3) {
-        return getIcon(!whiteFirst, pieceType.King);
-      }
-      if (col == 4) {
-        return getIcon(!whiteFirst, pieceType.Queen);
-      }
-    }
+  const handleSquareClick = (position: string) => {
+    console.log("Square clicked:", position);
+    // Find the square in our board state
+    const clickedSquareIndex = boardSquares.findIndex(
+      (s) => s.position === position,
+    );
+    if (clickedSquareIndex === -1) return;
 
-    return null;
+    const clickedSquare = boardSquares[clickedSquareIndex];
+
+    if (isMoving && selectedPosition) {
+      // Move the piece from selected square to clicked square
+      const selectedSquareIndex = boardSquares.findIndex(
+        (s) => s.position === selectedPosition,
+      );
+      if (selectedSquareIndex === -1) return;
+
+      const selectedSquare = boardSquares[selectedSquareIndex];
+
+      // Only move if there's a piece to move
+      if (selectedSquare.piece) {
+        // Store the piece that's being moved
+        const movingPiece = selectedSquare.piece;
+
+        // Update board state (this will automatically update the UI)
+        boardSquares[selectedSquareIndex] = { ...selectedSquare, piece: null };
+        boardSquares[clickedSquareIndex] = {
+          ...clickedSquare,
+          piece: movingPiece,
+        };
+
+        // Reset movement state
+        isMoving = false;
+        selectedPosition = null;
+      }
+    } else if (clickedSquare.piece) {
+      // Select this square if it has a piece
+      isMoving = true;
+      selectedPosition = position;
+    }
   };
-
-  for (let i = rows - 1; i >= 0; i--) {
-    for (let j = cols - 1; j >= 0; j--) {
-      // Determine if square should be light or dark
-      const isLight = (i + j) % 2 === 0;
-      boardSquares.push({
-        row: i,
-        col: j,
-        isLight: isLight,
-        position: String.fromCharCode(101 - i) + String.fromCharCode(j + 1),
-        piece: getPiece(i, j),
-      });
-    }
-  }
 </script>
 
 <div class="container">
   <div class="chess-board">
     {#each boardSquares as square (square.position)}
       <div
-        class="square {square.isLight ? 'light' : 'dark'}"
+        id={square.position}
+        class="square {square.isLight ? 'light' : 'dark'} {selectedPosition ===
+        square.position
+          ? 'selected'
+          : ''}"
         data-position={square.position}
+        onclick={() => handleSquareClick(square.position)}
       >
         {#if square.piece !== null}
           <!-- the isLight parameter should be passed from user input when they choose white / black -->
-          <img src={square.piece} alt="Pawn" />
+          <img src={square.piece} alt="Chess piece" />
         {/if}
       </div>
     {/each}

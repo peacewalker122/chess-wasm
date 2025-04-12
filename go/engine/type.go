@@ -7,15 +7,15 @@ const (
 	Black
 )
 
-type PieceType int
+type PieceType string
 
 const (
-	Pawn PieceType = iota
-	Knight
-	Bishop
-	Rook
-	Queen
-	King
+	Pawn   PieceType = "P"
+	Knight           = "N"
+	Bishop           = "B"
+	Rook             = "R"
+	Queen            = "Q"
+	King             = "K"
 )
 
 type Piece struct {
@@ -24,15 +24,15 @@ type Piece struct {
 }
 
 type Move struct {
-	Row       int
-	Col       int
-	AbleToEat bool
+	From    string
+	To      string
+	IsToEat bool
 }
 
 type Board struct {
-	Row      int
-	Col      int
-	isLight  bool
-	Position string
-	Piece    *Piece
+	Row      int     `json:"row"`
+	Col      int     `json:"col"`
+	IsLight  bool    `json:"isLight"`
+	Position string  `json:"position"`
+	Piece    *string `json:"piece"`
 }

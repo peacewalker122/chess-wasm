@@ -2,6 +2,11 @@ package engine
 
 import "fmt"
 
+type Game struct {
+	Moves []Move
+	Board [64]Board
+}
+
 func getPieceShorthand(piece PieceType) string {
 	switch piece {
 	case Pawn:
@@ -23,59 +28,45 @@ func getPieceShorthand(piece PieceType) string {
 
 func getIcon(isLight bool, piece PieceType) string {
 	if isLight {
-		return fmt.Sprintf("w%s", getPieceShorthand(piece))
+		return fmt.Sprintf("w%s.svg", piece)
 	}
-	return fmt.Sprintf("b%s", getPieceShorthand(piece))
+	return fmt.Sprintf("b%s.svg", piece)
 }
 
-func getPiece(row, col int) *Piece {
+func getPiece(row, col int) *string {
 	if row == 1 {
-		return &Piece{
-			Type:  Pawn,
-			Color: White,
-		}
+		val := getIcon(true, Pawn)
+		return &val
 	}
 	if row == 6 {
-		return &Piece{
-			Type:  Pawn,
-			Color: White,
-		}
+		val := getIcon(false, Pawn)
+		return &val
 	}
 
 	if row == 0 || row == 7 {
-		var color Color
+		var isLight bool
 		if row == 0 {
-			color = White
+			isLight = true
 		} else {
-			color = Black
+			isLight = false
 		}
 
 		switch col {
 		case 0, 7:
-			return &Piece{
-				Type:  Rook,
-				Color: color,
-			}
+			val := getIcon(isLight, Rook)
+			return &val
 		case 1, 6:
-			return &Piece{
-				Type:  Knight,
-				Color: color,
-			}
+			val := getIcon(isLight, Knight)
+			return &val
 		case 2, 5:
-			return &Piece{
-				Type:  Bishop,
-				Color: color,
-			}
+			val := getIcon(isLight, Bishop)
+			return &val
 		case 3:
-			return &Piece{
-				Type:  Queen,
-				Color: color,
-			}
+			val := getIcon(isLight, Queen)
+			return &val
 		case 4:
-			return &Piece{
-				Type:  King,
-				Color: color,
-			}
+			val := getIcon(isLight, King)
+			return &val
 		default:
 			return nil
 		}
@@ -99,7 +90,7 @@ func CreateBoard(isWhiteFirst *bool) [64]Board {
 			board[i*8+j] = Board{
 				Row:      i,
 				Col:      j,
-				isLight:  (i+j)%2 == 0,
+				IsLight:  (i+j)%2 == 0,
 				Position: position,
 				Piece:    getPiece(i, j),
 			}
@@ -107,4 +98,36 @@ func CreateBoard(isWhiteFirst *bool) [64]Board {
 	}
 
 	return board
+}
+
+// from a2 to a4 for example
+func (b *Game) CreateMove(from string, to string) ([64]Board, error) {
+	// TODO: add move validation
+
+	row, col := GetIndexFromCoordinate(from)
+	if row < 0 || row > 7 || col < 0 || col > 7 {
+		return [64]Board{}, fmt.Errorf("invalid from coordinate: %s", from)
+	}
+	if b.Board[row*8+col].Piece == nil {
+		return [64]Board{}, fmt.Errorf("no piece at from coordinate: %s", from)
+	}
+
+	row2, col2 := GetIndexFromCoordinate(to)
+	if row < 0 || row > 7 || col < 0 || col > 7 {
+		return [64]Board{}, fmt.Errorf("invalid from coordinate: %s", from)
+	}
+
+	targetindex := row2*8 + col2
+	previousindex := row*8 + row
+
+	b.Moves = append(b.Moves, Move{
+		From:    from,
+		To:      to,
+		IsToEat: b.Board[targetindex].Piece != nil,
+	})
+
+	b.Board[targetindex].Piece = b.Board[previousindex].Piece
+	b.Board[previousindex].Piece = nil
+
+	return b.Board, nil
 }
